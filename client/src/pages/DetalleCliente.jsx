@@ -1,6 +1,7 @@
 import '../css/detallecliente.css'
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import clientesService from "../services/clientesService";
 
 const DetalleCliente = () => {
  const { id } = useParams();
@@ -11,31 +12,27 @@ const DetalleCliente = () => {
   const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
-    fetch(`https://fakestoreapi.com/users/${id}`)
-      .then((res) => res.json())
-      .then((data) => setCliente(data));
+    // Antes: fetch directo a `https://fakestoreapi.com/users/${id}` (API de prueba).
+    // Ahora se usa clientesService, que lee del backend propio (Firestore).
+    clientesService
+      .obtenerCliente(id)
+      .then((data) => setCliente(data))
+      .catch(() => setMensaje("No se pudo cargar el cliente."));
   }, [id]);
 
     const eliminarCliente = async () => {
     try {
-      const respuesta = await fetch(
-        `https://fakestoreapi.com/users/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      // Antes: fetch directo con method DELETE a fakestoreapi. Ahora se usa
+      // clientesService, que borra en el backend propio (Firestore).
+      await clientesService.eliminarCliente(id);
 
-      if (respuesta.ok) {
-        setMensaje("Cliente eliminado correctamente");
+      setMensaje("Cliente eliminado correctamente");
 
-        setTimeout(() => {
-          navigate("/clientes");
-        }, 2000);
-      } else { //Mostramos mensaje de error si se cancela la eliminacion del cliente (ver analisis numero [5] en Analisis.md)
-        setMensaje("No se pudo eliminar el cliente. Intente nuevamente.");
-      }
-    } catch (error) {
-      setMensaje("Error al eliminar cliente");
+      setTimeout(() => {
+        navigate("/clientes");
+      }, 2000);
+    } catch (error) { //Mostramos mensaje de error si falla la eliminación del cliente (ver analisis numero [5] en Analisis.md)
+      setMensaje("No se pudo eliminar el cliente. Intente nuevamente.");
     }
   };
   if (!cliente) {
